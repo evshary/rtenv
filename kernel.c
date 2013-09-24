@@ -358,6 +358,47 @@ void serial_readwrite_task()
 	}
 }
 
+void serial_shell_task(){
+	int fdin, fdout;
+	char str[1024];
+	char echo_char[2];
+	char ch;
+	int curr_char;
+	int done;
+
+	fdout= mq_open("/tmp/mqueue/out", 0);
+	fdin = open("/dev/tty0/in", 0);
+	
+
+	while(1){
+		memcpy(str, "\revshary@evshary-rtenv:~$\0", 26);
+		write(fdout, str, 26);
+		
+		curr_char = 0;
+		done = 0;
+		do{
+			read(fdin, &ch, 1);
+			
+			if(curr_char >= 1024 || (ch == '\r') || (ch == '\n')){
+				//str[curr_char++] = '\n';
+				//str[curr_char++] = '\r';
+				//str[curr_char++] = '\0';
+				echo_char[0] = '\n';
+				echo_char[1] = '\0';
+				write(fdout, echo_char, 2);
+				done = 1;
+			}else{
+				str[curr_char++] = ch;
+				echo_char[0] = ch;
+				echo_char[1] = '\0';
+				write(fdout, echo_char, 2);
+			}
+		}while(!done);
+		
+		//write(fdout, str, curr_char);
+	}
+}
+
 void first()
 {
 	setpriority(0, 0);
@@ -366,9 +407,10 @@ void first()
 	if (!fork()) setpriority(0, 0), serialout(USART2, USART2_IRQn);
 	if (!fork()) setpriority(0, 0), serialin(USART2, USART2_IRQn);
 	if (!fork()) rs232_xmit_msg_task();
-	if (!fork()) setpriority(0, PRIORITY_DEFAULT - 10), queue_str_task1();
-	if (!fork()) setpriority(0, PRIORITY_DEFAULT - 10), queue_str_task2();
-	if (!fork()) setpriority(0, PRIORITY_DEFAULT - 10), serial_readwrite_task();
+	//if (!fork()) setpriority(0, PRIORITY_DEFAULT - 10), queue_str_task1();
+	//if (!fork()) setpriority(0, PRIORITY_DEFAULT - 10), queue_str_task2();
+	//if (!fork()) setpriority(0, PRIORITY_DEFAULT - 10), serial_readwrite_task();
+	if (!fork()) setpriority(0, PRIORITY_DEFAULT - 10), serial_shell_task();
 
 	setpriority(0, PRIORITY_LIMIT);
 
