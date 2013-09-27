@@ -358,6 +358,12 @@ void serial_readwrite_task()
 	}
 }
 
+void print(int fdout, char * print_str){
+	//char str[1024];
+	//memcpy(str, print_str, strlen(print_str));
+	write(fdout, print_str, strlen(print_str));
+}
+
 void serial_shell_task(){
 	int fdin, fdout;
 	char str[1024];
@@ -393,11 +399,21 @@ void serial_shell_task(){
 			}
 		}while(!done);
 		if(strcmp(str, "help") == 0){
-			memcpy(str, "\rWhat can I help you?\n\0", 23);
-			write(fdout, str, 23);
+			print(fdout, "\rWhat can I help you?\n\0");
+			//memcpy(str, "\rWhat can I help you?\n\0", 23);
+			//write(fdout, str, 23);
 		}else if(strcmp(str, "hello") == 0){
-			memcpy(str, "\rHello World!\n\0", 15);
-			write(fdout, str, 15);
+			print(fdout, "\rHello World!\n\0");
+			//memcpy(str, "\rHello World!\n\0", 15);
+			//write(fdout, str, 15);
+		}else if(strcmp(str, "ps") == 0){
+			int i;
+			print(fdout, "\rPID     Status     Priority\n\0");
+			for(i = 0; i < TASK_LIMIT; i++){
+				//print(fdout, )
+			}
+		}else{
+			print(fdout, "\rThis is wrong command!\n\0");
 		}
 		
 	}
@@ -712,10 +728,11 @@ _mknod(struct pipe_ringbuffer *pipe, int dev)
 	return 0;
 }
 
+struct task_control_block tasks[TASK_LIMIT];
+
 int main()
 {
 	unsigned int stacks[TASK_LIMIT][STACK_SIZE];
-	struct task_control_block tasks[TASK_LIMIT];
 	struct pipe_ringbuffer pipes[PIPE_LIMIT];
 	struct task_control_block *ready_list[PRIORITY_LIMIT + 1];  /* [0 ... 39] */
 	struct task_control_block *wait_list = NULL;
