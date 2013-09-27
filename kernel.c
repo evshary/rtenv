@@ -380,9 +380,7 @@ void serial_shell_task(){
 			read(fdin, &ch, 1);
 			
 			if(curr_char >= 1024 || (ch == '\r') || (ch == '\n')){
-				//str[curr_char++] = '\n';
-				//str[curr_char++] = '\r';
-				//str[curr_char++] = '\0';
+				str[curr_char] = '\0';
 				echo_char[0] = '\n';
 				echo_char[1] = '\0';
 				write(fdout, echo_char, 2);
@@ -394,8 +392,14 @@ void serial_shell_task(){
 				write(fdout, echo_char, 2);
 			}
 		}while(!done);
+		if(strcmp(str, "help") == 0){
+			memcpy(str, "\rWhat can I help you?\n\0", 23);
+			write(fdout, str, 23);
+		}else if(strcmp(str, "hello") == 0){
+			memcpy(str, "\rHello World!\n\0", 15);
+			write(fdout, str, 15);
+		}
 		
-		//write(fdout, str, curr_char);
 	}
 }
 
