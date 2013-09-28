@@ -72,6 +72,7 @@ void puts(char *s)
 
 #define O_CREAT 4
 
+
 /* Stack struct of user thread, see "Exception entry and return" */
 struct user_thread_stack {
 	unsigned int r4;
@@ -104,6 +105,8 @@ struct task_control_block {
     struct task_control_block **prev;
     struct task_control_block  *next;
 };
+
+struct task_control_block tasks[TASK_LIMIT];
 
 /* 
  * pathserver assumes that all files are FIFOs that were registered
@@ -358,10 +361,47 @@ void serial_readwrite_task()
 	}
 }
 
+int getDigitNum(int num){
+	int digit = 1;
+	while(num > 9){
+		num /= 10;
+		digit++;
+	}
+	return digit;
+}
+
+char* itoa(char* int_ptr, int num){
+	int digitNum = getDigitNum(num);
+	int i;
+	int_ptr[digitNum] = '\0';
+	for(i = digitNum-1; i >= 0; i--, num/=10){
+		int_ptr[i] = "0123456789"[num%10];
+	}
+	return int_ptr;
+}
+
 void print(int fdout, char * print_str){
-	//char str[1024];
-	//memcpy(str, print_str, strlen(print_str));
-	write(fdout, print_str, strlen(print_str));
+	write(fdout, print_str, strlen(print_str)+1);
+}
+
+void task_info(int fdout, int status){
+	switch(status){
+		case 0:
+			print(fdout, "TASK_READY\0");
+			break;
+		case 1:
+			print(fdout, "TASK_WAIT_READ\0");
+			break;
+		case 2:
+			print(fdout, "TASK_WAIT_WRITE\0");
+			break;
+		case 3:
+			print(fdout, "TASK_WAIT_INTR\0");
+			break;
+		case 4:
+			print(fdout, "TASK_WAIT_TIME\0");
+			break;
+	}
 }
 
 void serial_shell_task(){
@@ -379,7 +419,8 @@ void serial_shell_task(){
 	while(1){
 		memcpy(str, "\revshary@evshary-rtenv:~$\0", 26);
 		write(fdout, str, 26);
-		
+		//print(fdout, "\revshary@evshary-rtenv:~$\0");		
+
 		curr_char = 0;
 		done = 0;
 		do{
@@ -400,17 +441,19 @@ void serial_shell_task(){
 		}while(!done);
 		if(strcmp(str, "help") == 0){
 			print(fdout, "\rWhat can I help you?\n\0");
-			//memcpy(str, "\rWhat can I help you?\n\0", 23);
-			//write(fdout, str, 23);
 		}else if(strcmp(str, "hello") == 0){
 			print(fdout, "\rHello World!\n\0");
-			//memcpy(str, "\rHello World!\n\0", 15);
-			//write(fdout, str, 15);
 		}else if(strcmp(str, "ps") == 0){
 			int i;
-			print(fdout, "\rPID     Status     Priority\n\0");
+			print(fdout, "\rPID\tStatus\tPriority\n\0");
 			for(i = 0; i < TASK_LIMIT; i++){
-				//print(fdout, )
+				print(fdout, "\r\0");
+				print(fdout, itoa(str, tasks[i].pid));
+				print(fdout, "\t");
+				task_info(fdout, tasks[i].status);
+				print(fdout, "\t");
+				print(fdout, itoa(str, tasks[i].priority));
+				print(fdout, "\n\0");
 			}
 		}else{
 			print(fdout, "\rThis is wrong command!\n\0");
@@ -728,7 +771,6 @@ _mknod(struct pipe_ringbuffer *pipe, int dev)
 	return 0;
 }
 
-struct task_control_block tasks[TASK_LIMIT];
 
 int main()
 {
