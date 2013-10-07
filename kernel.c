@@ -39,7 +39,7 @@ size_t strlen(const char *s)
 	);
 }
 
-void puts(char *s)
+void put(char *s)
 {
 	while (*s) {
 		while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET)
@@ -432,6 +432,17 @@ void serial_shell_task(){
 				echo_char[1] = '\0';
 				write(fdout, echo_char, 2);
 				done = 1;
+			}else if(ch == 0x7f){
+				curr_char--;
+				echo_char[0] = '\b';
+				echo_char[1] = '\0';
+				write(fdout, echo_char, 2);
+				echo_char[0] = ' ';
+				echo_char[1] = '\0';
+				write(fdout, echo_char, 2);
+				echo_char[0] = '\b';
+				echo_char[1] = '\0';
+				write(fdout, echo_char, 2);
 			}else{
 				str[curr_char++] = ch;
 				echo_char[0] = ch;
@@ -443,6 +454,17 @@ void serial_shell_task(){
 			print(fdout, "\rWhat can I help you?\n\0");
 		}else if(strcmp(str, "hello") == 0){
 			print(fdout, "\rHello World!\n\0");
+			//printf("Hello World123\n");
+		}else if(strcmp(str, "hello") == 0){
+			print(fdout, "\rHello World!\n\0");
+		}else if(strcmp(str, "echo") == 0){
+			//printf("Hello World123\n");
+			//system("ls");
+			//FILE *fp = fopen("./log.txt", "a");
+			//fprintf(fp, "123456\n");
+			//fclose(fp);
+			//scanf("%s", str);
+			//print(fdout, "\rHello World!\n\0");
 		}else if(strcmp(str, "ps") == 0){
 			int i;
 			print(fdout, "\rPID\tStatus\tPriority\n\0");

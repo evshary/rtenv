@@ -44,13 +44,18 @@ main.bin: kernel.c context_switch.s syscall.s syscall.h
 	$(CROSS_COMPILE)objdump -S main.elf > main.list
 
 qemu: main.bin $(QEMU_STM32)
-	$(QEMU_STM32) -M stm32-p103 -kernel main.bin
+	$(QEMU_STM32) -M stm32-p103 -kernel main.bin -semihosting 
 
 qemudbg: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
 		-kernel main.bin
 
+gdbauto: main.bin
+	$(QEMU_STM32) -M stm32-p103 \
+		-gdb tcp::3333 -S \
+		-kernel main.bin &
+	$(CROSS_COMPILE)gdb -x gdb.in
 
 qemu_remote: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 -kernel main.bin -vnc :1
