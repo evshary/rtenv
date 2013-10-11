@@ -1,0 +1,174 @@
+diff --git a/context_switch.s b/context_switch.s
+index 3f5261c..2a4ef65 100644
+--- a/context_switch.s
++++ b/context_switch.s
+@@ -7,11 +7,11 @@
+ SysTick_Handler:
+ USART2_IRQHandler:
+ 	mrs r0, psp
+-	stmdb r0!, {r7}
++	stmdb r0!, {r8}
+ 
+ 	/* Get ISR number */
+-	mrs r7, ipsr
+-	neg r7, r7
++	mrs r8, ipsr
++	neg r8, r8
+ 
+ 	/* save user state */
+ 	stmdb r0!, {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+@@ -27,7 +27,7 @@ USART2_IRQHandler:
+ SVC_Handler:
+ 	/* save user state */
+ 	mrs r0, psp
+-	stmdb r0!, {r7}
++	stmdb r0!, {r8}
+ 	stmdb r0!, {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+ 
+ 	/* load kernel state */
+@@ -49,6 +49,6 @@ activate:
+ 	
+ 	/* load user state */
+ 	pop {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+-	pop {r7}
++	pop {r8}
+ 
+ 	bx lr
+diff --git a/kernel.c b/kernel.c
+index 59255d6..97a04ba 100644
+--- a/kernel.c
++++ b/kernel.c
+@@ -39,7 +39,7 @@ size_t strlen(const char *s)
+ 	);
+ }
+ 
+-void put(char *s)
++void puts(char *s)
+ {
+ 	while (*s) {
+ 		while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET)
+@@ -834,7 +834,7 @@ int main()
+ 		tasks[current_task].status = TASK_READY;
+ 		timeup = 0;
+ 
+-		switch (tasks[current_task].stack->r7) {
++		switch (tasks[current_task].stack->r8) {
+ 		case 0x1: /* fork */
+ 			if (task_count == TASK_LIMIT) {
+ 				/* Cannot create a new task, return error */
+@@ -918,8 +918,8 @@ int main()
+ 			}
+ 			break;
+ 		default: /* Catch all interrupts */
+-			if ((int)tasks[current_task].stack->r7 < 0) {
+-				unsigned int intr = -tasks[current_task].stack->r7 - 16;
++			if ((int)tasks[current_task].stack->r8 < 0) {
++				unsigned int intr = -tasks[current_task].stack->r8 - 16;
+ 
+ 				if (intr == SysTick_IRQn) {
+ 					/* Never disable timer. We need it for pre-emption */
+diff --git a/syscall.s b/syscall.s
+index eb6b2e8..9fccc0f 100644
+--- a/syscall.s
++++ b/syscall.s
+@@ -5,73 +5,73 @@
+ 
+ .global fork
+ fork:
+-	push {r7}
+-	mov r7, #0x1
++	push {r8}
++	mov r8, #0x1
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global getpid
+ getpid:
+-	push {r7}
+-	mov r7, #0x2
++	push {r8}
++	mov r8, #0x2
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global write
+ write:
+-	push {r7}
+-	mov r7, #0x3
++	push {r8}
++	mov r8, #0x3
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global read
+ read:
+-	push {r7}
+-	mov r7, #0x4
++	push {r8}
++	mov r8, #0x4
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global interrupt_wait
+ interrupt_wait:
+-	push {r7}
+-	mov r7, #0x5
++	push {r8}
++	mov r8, #0x5
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global getpriority
+ getpriority:
+-	push {r7}
+-	mov r7, #0x6
++	push {r8}
++	mov r8, #0x6
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global setpriority
+ setpriority:
+-	push {r7}
+-	mov r7, #0x7
++	push {r8}
++	mov r8, #0x7
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global mknod
+ mknod:
+-	push {r7}
+-	mov r7, #0x8
++	push {r8}
++	mov r8, #0x8
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr
+ .global sleep
+ sleep:
+-	push {r7}
+-	mov r7, #0x9
++	push {r8}
++	mov r8, #0x9
+ 	svc 0
+ 	nop
+-	pop {r7}
++	pop {r8}
+ 	bx lr

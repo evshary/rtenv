@@ -2,42 +2,10 @@
 #include "RTOSConfig.h"
 
 #include "syscall.h"
+#include "kernel.h"
+#include "shell.h"
 
 #include <stddef.h>
-
-void *memcpy(void *dest, const void *src, size_t n);
-
-int strcmp(const char *a, const char *b) __attribute__ ((naked));
-int strcmp(const char *a, const char *b)
-{
-	asm(
-        "strcmp_lop:                \n"
-        "   ldrb    r2, [r0],#1     \n"
-        "   ldrb    r3, [r1],#1     \n"
-        "   cmp     r2, #1          \n"
-        "   it      hi              \n"
-        "   cmphi   r2, r3          \n"
-        "   beq     strcmp_lop      \n"
-		"	sub     r0, r2, r3  	\n"
-        "   bx      lr              \n"
-		:::
-	);
-}
-
-size_t strlen(const char *s) __attribute__ ((naked));
-size_t strlen(const char *s)
-{
-	asm(
-		"	sub  r3, r0, #1			\n"
-        "strlen_loop:               \n"
-		"	ldrb r2, [r3, #1]!		\n"
-		"	cmp  r2, #0				\n"
-        "   bne  strlen_loop        \n"
-		"	sub  r0, r3, r0			\n"
-		"	bx   lr					\n"
-		:::
-	);
-}
 
 void put(char *s)
 {
@@ -48,65 +16,6 @@ void put(char *s)
 		s++;
 	}
 }
-
-#define STACK_SIZE 512 /* Size of task stacks in words */
-#define TASK_LIMIT 8  /* Max number of tasks we can handle */
-#define PIPE_BUF   64 /* Size of largest atomic pipe message */
-#define PATH_MAX   32 /* Longest absolute path */
-#define PIPE_LIMIT (TASK_LIMIT * 2)
-
-#define PATHSERVER_FD (TASK_LIMIT + 3) 
-	/* File descriptor of pipe to pathserver */
-
-#define PRIORITY_DEFAULT 20
-#define PRIORITY_LIMIT (PRIORITY_DEFAULT * 2 - 1)
-
-#define TASK_READY      0
-#define TASK_WAIT_READ  1
-#define TASK_WAIT_WRITE 2
-#define TASK_WAIT_INTR  3
-#define TASK_WAIT_TIME  4
-
-#define S_IFIFO 1
-#define S_IMSGQ 2
-
-#define O_CREAT 4
-
-
-/* Stack struct of user thread, see "Exception entry and return" */
-struct user_thread_stack {
-	unsigned int r4;
-	unsigned int r5;
-	unsigned int r6;
-	unsigned int r7;
-	unsigned int r8;
-	unsigned int r9;
-	unsigned int r10;
-	unsigned int fp;
-	unsigned int _lr;	/* Back to system calls or return exception */
-	unsigned int _r7;	/* Backup from isr */
-	unsigned int r0;
-	unsigned int r1;
-	unsigned int r2;
-	unsigned int r3;
-	unsigned int ip;
-	unsigned int lr;	/* Back to user thread code */
-	unsigned int pc;
-	unsigned int xpsr;
-	unsigned int stack[STACK_SIZE - 18];
-};
-
-/* Task Control Block */
-struct task_control_block {
-    struct user_thread_stack *stack;
-    int pid;
-    int status;
-    int priority;
-    struct task_control_block **prev;
-    struct task_control_block  *next;
-};
-
-struct task_control_block tasks[TASK_LIMIT];
 
 /* 
  * pathserver assumes that all files are FIFOs that were registered
@@ -246,16 +155,6 @@ void serialin(USART_TypeDef* uart, unsigned int intr)
 	}
 }
 
-void greeting()
-{
-	int fdout = open("/dev/tty0/out", 0);
-	char *string = "Hello, World!\n";
-	while (*string) {
-		write(fdout, string, 1);
-		string++;
-	}
-}
-
 void echo()
 {
 	int fdout, fdin;
@@ -368,120 +267,6 @@ int getDigitNum(int num){
 		digit++;
 	}
 	return digit;
-}
-
-char* itoa(char* int_ptr, int num){
-	int digitNum = getDigitNum(num);
-	int i;
-	int_ptr[digitNum] = '\0';
-	for(i = digitNum-1; i >= 0; i--, num/=10){
-		int_ptr[i] = "0123456789"[num%10];
-	}
-	return int_ptr;
-}
-
-void print(int fdout, char * print_str){
-	write(fdout, print_str, strlen(print_str)+1);
-}
-
-void task_info(int fdout, int status){
-	switch(status){
-		case 0:
-			print(fdout, "TASK_READY\0");
-			break;
-		case 1:
-			print(fdout, "TASK_WAIT_READ\0");
-			break;
-		case 2:
-			print(fdout, "TASK_WAIT_WRITE\0");
-			break;
-		case 3:
-			print(fdout, "TASK_WAIT_INTR\0");
-			break;
-		case 4:
-			print(fdout, "TASK_WAIT_TIME\0");
-			break;
-	}
-}
-
-void serial_shell_task(){
-	int fdin, fdout;
-	char str[1024];
-	char echo_char[2];
-	char ch;
-	int curr_char;
-	int done;
-
-	fdout= mq_open("/tmp/mqueue/out", 0);
-	fdin = open("/dev/tty0/in", 0);
-	
-
-	while(1){
-		memcpy(str, "\revshary@evshary-rtenv:~$\0", 26);
-		write(fdout, str, 26);
-		//print(fdout, "\revshary@evshary-rtenv:~$\0");		
-
-		curr_char = 0;
-		done = 0;
-		do{
-			read(fdin, &ch, 1);
-			
-			if(curr_char >= 1024 || (ch == '\r') || (ch == '\n')){
-				str[curr_char] = '\0';
-				echo_char[0] = '\n';
-				echo_char[1] = '\0';
-				write(fdout, echo_char, 2);
-				done = 1;
-			}else if(ch == 0x7f){
-				curr_char--;
-				echo_char[0] = '\b';
-				echo_char[1] = '\0';
-				write(fdout, echo_char, 2);
-				echo_char[0] = ' ';
-				echo_char[1] = '\0';
-				write(fdout, echo_char, 2);
-				echo_char[0] = '\b';
-				echo_char[1] = '\0';
-				write(fdout, echo_char, 2);
-			}else{
-				str[curr_char++] = ch;
-				echo_char[0] = ch;
-				echo_char[1] = '\0';
-				write(fdout, echo_char, 2);
-			}
-		}while(!done);
-		if(strcmp(str, "help") == 0){
-			print(fdout, "\rWhat can I help you?\n\0");
-		}else if(strcmp(str, "hello") == 0){
-			print(fdout, "\rHello World!\n\0");
-			//printf("Hello World123\n");
-		}else if(strcmp(str, "hello") == 0){
-			print(fdout, "\rHello World!\n\0");
-		}else if(strcmp(str, "echo") == 0){
-			//printf("Hello World123\n");
-			//system("ls");
-			//FILE *fp = fopen("./log.txt", "a");
-			//fprintf(fp, "123456\n");
-			//fclose(fp);
-			//scanf("%s", str);
-			//print(fdout, "\rHello World!\n\0");
-		}else if(strcmp(str, "ps") == 0){
-			int i;
-			print(fdout, "\rPID\tStatus\tPriority\n\0");
-			for(i = 0; i < TASK_LIMIT; i++){
-				print(fdout, "\r\0");
-				print(fdout, itoa(str, tasks[i].pid));
-				print(fdout, "\t");
-				task_info(fdout, tasks[i].status);
-				print(fdout, "\t");
-				print(fdout, itoa(str, tasks[i].priority));
-				print(fdout, "\n\0");
-			}
-		}else{
-			print(fdout, "\rThis is wrong command!\n\0");
-		}
-		
-	}
 }
 
 void first()
