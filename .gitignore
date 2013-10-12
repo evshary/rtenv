@@ -3,5 +3,6 @@
 *.list
 *~
 tags
-*.*.swp
+.*.*.swp
+.*.swp
 *.in

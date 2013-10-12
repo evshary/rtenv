@@ -49,13 +49,16 @@ qemu: main.bin $(QEMU_STM32)
 qemudbg: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
-		-kernel main.bin
+		-kernel main.bin &
+	sleep 1
+	$(CROSS_COMPILE)gdb -x gdb.in
 
 gdbauto: main.bin
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
 		-kernel main.bin &
-	$(CROSS_COMPILE)gdb -x gdb.in
+	sleep 1
+	$(CROSS_COMPILE)gdb -x gdb_auto.in
 
 qemu_remote: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 -kernel main.bin -vnc :1
