@@ -1,4 +1,10 @@
 file main.elf
 target remote :3333
 
+#activate
 b kernel.c:618
+#firste
+b kernel.c:274
+#SVC_Handler
+b context_switch.s:27
+

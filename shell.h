@@ -62,9 +62,10 @@ void serial_shell_task(){
 		curr_char = 0;
 		done = 0;
 		do{
+			//GDBLABEL:READ
 			read(fdin, &ch, 1);
-			
 			if(curr_char >= 1024 || (ch == '\r') || (ch == '\n')){
+				//GDBLABEL:SKIP_DONE
 				str[curr_char] = '\0';
 				print(fdout, "\n\0");
 				done = 1;
@@ -78,13 +79,17 @@ void serial_shell_task(){
 				write(fdout, echo_char, 2);
 			}
 		}while(!done);
+		//GDBLABEL:STOP_TEST
 		if(strcmp(str, "help") == 0){
+			//GDBLABEL:TEST1
 			print(fdout, "\rWhat can I help you?\n\0");
 		}else if(strcmp(str, "hello") == 0){
+			//GDBLABEL:TEST2
 			print(fdout, "\rHello World!\n\0");
 		}else if(strcmp(str, "echo") == 0){
 			//Not Complete
 		}else if(strcmp(str, "ps") == 0){
+			//GDBLABEL:TEST3
 			int i;
 			print(fdout, "\rPID\tStatus\tPriority\n\0");
 			for(i = 0; i < TASK_LIMIT; i++){

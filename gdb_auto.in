@@ -1,41 +1,21 @@
 file main.elf
 target remote :3333
-
-#read
-b shell.h:65
-#print \n
-b shell.h:68
-#stop at command
-b shell.h:81
-#help
-b shell.h:82
-#hello
-b shell.h:84
-#ps
+b shell.h:66
+b shell.h:69
+b shell.h:83
+b shell.h:85
 b shell.h:88
+b shell.h:93
 c
-#jump over read
-commands
-print(fdout, "help\0");
-end
-j 68
+j 69
 c
-#jump at help
-j 82
+j 85
 c
-
-#jump over read
-j 68
+j 69
 c
-#jump at hello
-j 84
-c
-
-#jump over read
-j 68
-c
-#jump at ps
 j 88
 c
-
-
+j 69
+c
+j 93
+c

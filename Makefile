@@ -54,6 +54,7 @@ qemudbg: main.bin gdb.in $(QEMU_STM32)
 	$(CROSS_COMPILE)gdb -x gdb.in
 
 gdbauto: main.bin gdb_auto.in
+	./gen_script.sh
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
 		-kernel main.bin &
