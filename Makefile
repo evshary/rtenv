@@ -13,7 +13,7 @@ CMSIS_PLAT_SRC = $(CMSIS_LIB)/DeviceSupport/$(VENDOR)/$(PLAT)
 
 all: main.bin
 
-main.bin: kernel.c context_switch.s syscall.s syscall.h
+main.bin: kernel.c context_switch.s syscall.s syscall.h kernel.h shell.h
 	$(CROSS_COMPILE)gcc \
 		-Wl,-Tmain.ld -nostartfiles \
 		-I . \
@@ -46,14 +46,14 @@ main.bin: kernel.c context_switch.s syscall.s syscall.h
 qemu: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 -kernel main.bin -semihosting 
 
-qemudbg: main.bin $(QEMU_STM32)
+qemudbg: main.bin gdb.in $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
 		-kernel main.bin &
 	sleep 1
 	$(CROSS_COMPILE)gdb -x gdb.in
 
-gdbauto: main.bin
+gdbauto: main.bin gdb_auto.in
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
 		-kernel main.bin &

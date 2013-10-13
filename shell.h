@@ -66,9 +66,7 @@ void serial_shell_task(){
 			
 			if(curr_char >= 1024 || (ch == '\r') || (ch == '\n')){
 				str[curr_char] = '\0';
-				echo_char[0] = '\n';
-				echo_char[1] = '\0';
-				write(fdout, echo_char, 2);
+				print(fdout, "\n\0");
 				done = 1;
 			}else if(ch == 0x7f){
 				curr_char--;
@@ -82,8 +80,6 @@ void serial_shell_task(){
 		}while(!done);
 		if(strcmp(str, "help") == 0){
 			print(fdout, "\rWhat can I help you?\n\0");
-		}else if(strcmp(str, "hello") == 0){
-			print(fdout, "\rHello World!\n\0");
 		}else if(strcmp(str, "hello") == 0){
 			print(fdout, "\rHello World!\n\0");
 		}else if(strcmp(str, "echo") == 0){
