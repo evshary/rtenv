@@ -1,3 +1,5 @@
+#ifndef SHELL_H
+#define SHELL_H
 void greeting()
 {
 	int fdout = open("/dev/tty0/out", 0);
@@ -108,3 +110,4 @@ void serial_shell_task(){
 		
 	}
 }
+#endif

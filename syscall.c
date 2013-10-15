@@ -1,5 +1,6 @@
+#include <stddef.h>
 #define SYSCALL_FORK		(0x01)
-#define SYSCALL_GETTID		(0x02)
+#define SYSCALL_GETPID		(0x02)
 #define SYSCALL_WRITE		(0x03)
 #define SYSCALL_READ		(0x04)
 #define SYSCALL_WAIT_INTR	(0x05)
@@ -8,7 +9,8 @@
 #define SYSCALL_MKNOD		(0x08)
 #define SYSCALL_SLEEP		(0x09)
 
-#define TOCALL(NUM) #NUM
+#define QUOTE(NUM) #NUM
+#define TOCALL(NUM) QUOTE(NUM)
 
 #define SYS_CALL_STRUCT(ACT) \
 	__asm__( \
@@ -26,7 +28,7 @@ int fork(){
 	SYS_CALL_STRUCT(TOCALL(SYSCALL_FORK));
 }
 
-int GETPID() __attribute__ ((naked));
+int getpid() __attribute__ ((naked));
 int getpid(){
 	SYS_CALL_STRUCT(TOCALL(SYSCALL_GETPID));
 }
@@ -42,7 +44,7 @@ int read(int fd, void *buf, size_t count){
 }
 
 void interrupt_wait(int intr) __attribute__ ((naked));
-int interrupt_wait(int intr){
+void interrupt_wait(int intr){
 	SYS_CALL_STRUCT(TOCALL(SYSCALL_WAIT_INTR));
 }
 
@@ -54,7 +56,7 @@ int getpriority(int who){
 
 int setpriority(int who, int value) __attribute__ ((naked));
 int setpriority(int who, int value){
-	SYS_CALL_STRUCT(TOCALL(SYSCALL_FORK_SETPRIOR));
+	SYS_CALL_STRUCT(TOCALL(SYSCALL_SETPRIOR));
 }
 
 int mknod(int fd, int mode, int dev) __attribute__ ((naked));
@@ -62,7 +64,7 @@ int mknod(int fd, int mode, int dev){
 	SYS_CALL_STRUCT(TOCALL(SYSCALL_MKNOD));
 }
 
-void sleep(unsigned int) __attribute__ ((naked));
-void sleep(unsigned int){
+void sleep(unsigned int msec) __attribute__ ((naked));
+void sleep(unsigned int msec){
 	SYS_CALL_STRUCT(TOCALL(SYSCALL_SLEEP));
 }

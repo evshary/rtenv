@@ -1,3 +1,5 @@
+#ifndef KERNEL_H
+#define KERNEL_H
 #define STACK_SIZE 512 /* Size of task stacks in words */
 #define TASK_LIMIT 8  /* Max number of tasks we can handle */
 #define PIPE_BUF   64 /* Size of largest atomic pipe message */
@@ -95,3 +97,4 @@ struct task_control_block {
 };
 
 struct task_control_block tasks[TASK_LIMIT];
+#endif
