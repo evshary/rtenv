@@ -36,7 +36,7 @@ main.bin: kernel.c context_switch.s syscall.s syscall.h kernel.h shell.h
 		$(STM32_LIB)/src/misc.c \
 		\
 		context_switch.s \
-		syscall.s \
+		syscall.c \
 		stm32_p103.c \
 		kernel.c \
 		memcpy.s

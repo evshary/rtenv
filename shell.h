@@ -82,6 +82,7 @@ void serial_shell_task(){
 		//GDBLABEL:STOP_TEST
 		if(strcmp(str, "help") == 0){
 			//GDBLABEL:TEST1
+			//printf("abc123\n");
 			print(fdout, "\rWhat can I help you?\n\0");
 		}else if(strcmp(str, "hello") == 0){
 			//GDBLABEL:TEST2
