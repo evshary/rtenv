@@ -68,3 +68,13 @@ void sleep(unsigned int msec) __attribute__ ((naked));
 void sleep(unsigned int msec){
 	SYS_CALL_STRUCT(TOCALL(SYSCALL_SLEEP));
 }
+
+int host_call(int action, void *arg) __attribute__((naked));
+int host_call(int action, void *arg){
+	__asm__(\
+		"bkpt 0xAB\n"\
+		"nop\n"\
+		"bx lr\n"\
+		:::\
+	);
+}

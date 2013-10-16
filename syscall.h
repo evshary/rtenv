@@ -18,4 +18,6 @@ int setpriority(int who, int value);
 int mknod(int fd, int mode, int dev);
 
 void sleep(unsigned int);
+
+int host_call(int action, void *arg);
 #endif
