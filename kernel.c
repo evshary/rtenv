@@ -10,6 +10,8 @@
 
 #include <stddef.h>
 
+#define SEMIHOST
+
 struct task_control_block tasks[TASK_LIMIT];
 
 void put(char *s)
