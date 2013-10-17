@@ -2,6 +2,11 @@
 #define SYSCALL_H
 #include <stddef.h>
 
+union sys_param{
+	int pINT;
+	char *pCHAR;
+};
+
 void *activate(void *stack);
 
 int fork();
